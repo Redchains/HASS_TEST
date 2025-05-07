@@ -1,6 +1,6 @@
 blueprint:
   name: Müllabhol-Erinnerung für AWTRIX
-  description: Zeigt Erinnerungen auf AWTRIX für die Müllabholung am nächsten Tag ab 17:00 Uhr an
+  description: Zeigt Erinnerungen auf AWTRIX für ausgewählte Müllabhol-Ereignisse am nächsten Tag ab 17:00 Uhr an
   domain: automation
   input:
     mqtt_prefix:
@@ -15,11 +15,11 @@ blueprint:
           domain: calendar
     event_names:
       name: Ereignisnamen
-      description: Komma-separierte Liste der zu überwachenden Ereignisnamen (z.B. Restmüll, Gelber Sack, Papiermüll, Biomüll)
+      description: Komma-separierte Liste der zu überwachenden Ereignisnamen (z.B. Restmüll, Gelber Sack)
       default: "Restmüll, Gelber Sack, Papiermüll, Biomüll"
     icon_id:
       name: Icon-ID
-      description: Die ID des Icons, das auf AWTRIX angezeigt wird (siehe AWTRIX-Dokumentation)
+      description: Die ID des Icons, das auf AWTRIX angezeigt wird
       default: "12345"
     text_color:
       name: Schriftfarbe
