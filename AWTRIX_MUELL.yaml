@@ -1,12 +1,12 @@
 blueprint:
   name: Müllabhol-Erinnerung für AWTRIX
-  description: Zeigt Erinnerungen auf AWTRIX für ausgewählte Müllabhol-Ereignisse am nächsten Tag ab 17:00 Uhr an
+  description: Zeigt Erinnerungen auf AWTRIX für ausgewählte Müllabhol-Ereignisse am nächsten Tag an, mit stündlicher Abfrage
   domain: automation
   input:
-    mqtt_prefix:
-      name: MQTT-Präfix
-      description: Das MQTT-Präfix deiner AWTRIX (z.B. awtrix)
-      default: "awtrix"
+    awtrix_device:
+      name: AWTRIX Gerät
+      description: Die ID des AWTRIX-Geräts
+      default: "95827d9ac7396dd8ae55a3b82a059499"
     calendar_entity:
       name: Kalender-Entität
       description: Die Kalender-Entität, die die Müllabhol-Ereignisse enthält
@@ -25,39 +25,22 @@ blueprint:
       name: Schriftfarbe
       description: Die Farbe des Textes in Hexadezimal (z.B. FFFFFF für Weiß)
       default: "FFFFFF"
-    rainbow:
-      name: Regenbogen-Effekt
-      description: Regenbogen-Text-Effekt aktivieren
-      default: false
-      selector:
-        boolean:
-    scroll_speed:
-      name: Scroll-Geschwindigkeit
-      description: Die Scroll-Geschwindigkeit in Prozent
-      default: 80
+    duration:
+      name: Anzeigedauer
+      description: Wie lange die Erinnerung angezeigt werden soll (in Sekunden)
+      default: 3600
       selector:
         number:
-          min: 0
-          max: 100
+          min: 1
+          max: 86400
           step: 1
-    removal_time:
-      name: Entfernungszeit
-      description: Die Uhrzeit, zu der die Erinnerungen entfernt werden sollen
-      default: "06:00:00"
-      selector:
-        time:
 
 trigger:
-  - platform: time
-    at: '17:00:00'
+  - platform: time_pattern
+    hours: "/1"
 
 action:
   - variables:
-      removal_time: !input removal_time
-      tomorrow: '{{ (now() + timedelta(days=1)).date() }}'
-      removal_datetime: '{{ tomorrow | string + " " + removal_time }}'
-      removal_timestamp: '{{ as_timestamp(removal_datetime) }}'
-      lifetime: '{{ (removal_timestamp - now().timestamp()) | int }}'
       event_names_list: "{{ event_names.split(',') | map('trim') | list }}"
   - service: calendar.get_events
     data:
@@ -73,13 +56,11 @@ action:
             {{ events.events | selectattr('summary', 'eq', repeat.item) | list | count > 0 }}
         - service: mqtt.publish
           data:
-            topic: '{{ mqtt_prefix }}/custom/waste_reminder_{{ repeat.item | replace(" ", "_") }}'
+            topic: 'awtrix/app/waste_reminder_{{ repeat.item | replace(" ", "_") }}'
             payload: >
               {
                 "text": "Mülltonne Rausstellen: {{ repeat.item }}",
                 "icon": "{{ icon_id }}",
                 "color": "{{ text_color }}",
-                "rainbow": {{ rainbow | tojson }},
-                "scrollSpeed": {{ scroll_speed }},
-                "lifetime": {{ lifetime }}
+                "duration": {{ duration }}
               }
