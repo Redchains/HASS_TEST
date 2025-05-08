@@ -3,9 +3,9 @@ blueprint:
   description: Zeigt Erinnerungen auf AWTRIX für ausgewählte Müllabhol-Ereignisse am nächsten Tag an, mit stündlicher Abfrage
   domain: automation
   input:
-    awtrix_device:
-      name: AWTRIX Gerät
-      description: Die ID des AWTRIX-Geräts
+    awtrix_device_id:
+      name: AWTRIX Geräte-ID
+      description: Die eindeutige ID des AWTRIX-Geräts (z. B. 95827d9ac7396dd8ae55a3b82a059499)
       default: "95827d9ac7396dd8ae55a3b82a059499"
     calendar_entity:
       name: Kalender-Entität
@@ -15,7 +15,7 @@ blueprint:
           domain: calendar
     event_names:
       name: Ereignisnamen
-      description: Komma-separierte Liste der zu überwachenden Ereignisnamen (z.B. Restmüll, Gelber Sack)
+      description: Komma-separierte Liste der zu überwachenden Ereignisnamen (z. B. Restmüll, Gelber Sack)
       default: "Restmüll, Gelber Sack, Papiermüll, Biomüll"
     icon_id:
       name: Icon-ID
@@ -23,7 +23,7 @@ blueprint:
       default: "12345"
     text_color:
       name: Schriftfarbe
-      description: Die Farbe des Textes in Hexadezimal (z.B. FFFFFF für Weiß)
+      description: Die Farbe des Textes in Hexadezimal (z. B. FFFFFF für Weiß)
       default: "FFFFFF"
     duration:
       name: Anzeigedauer
@@ -42,6 +42,7 @@ trigger:
 action:
   - variables:
       event_names_list: "{{ event_names.split(',') | map('trim') | list }}"
+      awtrix_topic: "awtrix/app/waste_reminder_{{ repeat.item | replace(' ', '_') }}_{{ awtrix_device_id }}"
   - service: calendar.get_events
     data:
       entity_id: !input calendar_entity
@@ -56,7 +57,7 @@ action:
             {{ events.events | selectattr('summary', 'eq', repeat.item) | list | count > 0 }}
         - service: mqtt.publish
           data:
-            topic: 'awtrix/app/waste_reminder_{{ repeat.item | replace(" ", "_") }}'
+            topic: "{{ awtrix_topic }}"
             payload: >
               {
                 "text": "Mülltonne Rausstellen: {{ repeat.item }}",
